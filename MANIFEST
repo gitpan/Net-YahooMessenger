@@ -26,3 +26,4 @@ YahooMessenger/UnImplementEvent.pm
 YahooMessenger/EventHandler.pm
 YahooMessenger/CRAM.pm
 YahooMessenger/ChallengeStart.pm
+META.yml                                 Module meta-data (added by MakeMaker)

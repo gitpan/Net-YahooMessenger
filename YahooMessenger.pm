@@ -36,7 +36,7 @@ use constant YMSG_SALT       => '_2S43d5f';
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.13';
+$VERSION = '0.14';
 
 =head1 METHODS
 
@@ -550,12 +550,12 @@ __END__
 	#!perl
 	use Net::YahooMessenger;
 	use strict;
-	
+
 	my $yahoo = Net::YahooMessenger->new;
 	$yahoo->id('yahoo_id');
 	$yahoo->password('password');
 	$yahoo->login or die "Can't login Yahoo!Messenger";
-	
+
 	$yahoo->send('recipient_yahoo_id', 'Hello World!');
 	__END__
 
@@ -565,13 +565,13 @@ __END__
 	use Net::YahooMessenger;
 	use strict;
 	use constant IN_BUSY => 1;
-	
+
 	my $yahoo = Net::YahooMessenger->new(
 		id       => 'yahoo_id',
 		password => 'password',
 	);
 	$yahoo->login or die "Can't login Yahoo!Messenger";;
-	
+
 	$yahoo->change_state(IN_BUSY, q{I'm very busy now!});
 	sleep 5;
 	__END__
@@ -581,7 +581,7 @@ __END__
 	#!perl
 	use Net::YahooMessenger;
 	use strict;
-	
+
 	my $yahoo = Net::YahooMessenger->new(
 		id       => 'yahoo_id',
 		password => 'password',
@@ -589,18 +589,18 @@ __END__
 	$yahoo->set_event_handler(new ToStdoutEventHandler);
 	$yahoo->login or die "Can't login Yahoo!Messenger";
 	$yahoo->start;
-	
-	
-	
+
+
+
 	package ToStdoutEventHandler;
 	use base 'Net::YahooMessenger::EventHandler';
 	use strict;
-	
+
 	sub ChangeState {}
 	sub GoesOffline {}
 	sub GoesOnline {}
 	sub UnImplementEvent {}
-	
+
 	sub ReceiveMessage
 	{
 		my $self = shift;
@@ -614,7 +614,7 @@ __END__
 	#!perl
 	use Net::YahooMessenger;
 	use strict;
-	
+
 	my $yahoo = Net::YahooMessenger->new(
 		pre_login_url => 'http://edit.my.yahoo.co.jp/config/',
 		hostname      => 'cs.yahoo.co.jp',
@@ -622,13 +622,16 @@ __END__
 	$yahoo->id('yahoo_id');
 	$yahoo->password('password');
 	$yahoo->login or die "Can't login Yahoo!Messenger";
-	
+
 	$yahoo->send('recipient_yahoo_id', 'Konnitiwa Sekai!');
 	__END__
 
 =head1 AUTHOR
 
-Hiroyuki OYAMA <oyama@crayfish.co.jp> http://ymca.infoware.ne.jp/
+Hiroyuki OYAMA <oyama@cpan.org> http://ymca.infoware.ne.jp/
+
+From October 2003, this module is taken over and maintained by
+Tatsuhiko Miyagawa L<lt>miyagawa@bulknews.netL<gt>
 
 =head1 SEE ALSO
 
