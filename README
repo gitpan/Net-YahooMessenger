@@ -1,0 +1,47 @@
+Net/YahooMessenger
+==================
+
+Welcome to Net::YahooMessenger, a work in progress. First intended to
+be a quick tool for writing an Yahoo!Messenger script in Perl,
+Net::YahooMessenger has grown into a comprehensive Perl implementation
+of the YMSG protocol.
+
+Please read the Changes file for details about recent updates, and the
+Bugs section of this document for notes about future improvements.
+
+Please send the authers feedback and advice. Contact information can
+be found at the end of this file.
+
+Availability
+
+	http://ymca.infoware.ne.jp/dist/
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+  Crypt::PasswdMD5
+  LWP::UserAgent
+
+DEMONSTRATION
+
+A sample Net::YahooMessenger script is included with the distribution,
+under the creative name 'script/ymsg' and 'script/ymsgj'.
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2001 Hiroyuki OYAMA. Japan. All righits reserved.
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itsefl.
+
+Please refer to the use agreement of Yahoo! about use of the
+Yahoo!Messenger service.
