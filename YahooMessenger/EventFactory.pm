@@ -32,7 +32,7 @@ use constant EVENT_CLASS => {
 	6  => 'Net::YahooMessenger::ReceiveMessage',
 	15 => 'Net::YahooMessenger::NewFriendAlert',
 	76 => 'Net::YahooMessenger::ServerIsAlive',
-	85 => 'Net::YahooMessenger::LoginSuccessful',
+	85 => 'Net::YahooMessenger::ReceiveBuddyList',
 	87 => 'Net::YahooMessenger::ChallengeStart',
 };
 
@@ -94,7 +94,7 @@ sub create_by_raw_data
 		return $event;
 
 	} else {
-		my $class = EVENT_CLASS->{$event_code};
+		my $class = EVENT_CLASS->{$event_code} || 'Net::YahooMessenger::DummyEvent';
 		eval "require $class";
 		if ($@) {
 		#	print STDERR $@;
@@ -152,7 +152,7 @@ sub _recv_by_length
 	my $self = shift;
 	my $length = shift || 0;
 	my $handle = $self->{connection}->handle;
-	my $message;
+	my $message = '';
 
 	while (length $message < $length) {
 		my $buff = '';

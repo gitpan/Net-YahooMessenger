@@ -10,7 +10,7 @@ Revision history for Perl extension Net::YahooMessenger.
 	  Modify YMSG message parser
 0.03  Sat Nov 24 11:30:31 2001
 	- Replace ymsg script. Thanks Takefumi KIMURA<takefumi@takefumi.com>
-      Modify Event model of Visitor pattern(GoF)
+	- Modify Event model of Visitor pattern(GoF)
 	  	Add Net::YahooMessenger::EventVisitor.pm
 		    Net::YahooMessenger::JapaneseCommandLineVisitor.pm
 	  Add POD manual page
@@ -52,16 +52,25 @@ Revision history for Perl extension Net::YahooMessenger.
 		given to the header.
 	- Rename Net::YahooMessenger::Logon.pm -> Net::YahooMessenger::Login.pm
 	  Rename Net::YahooMessenger::CannotLogon.pm
-		-> Net::YahooMessenger::InvalidLogin.pm
+	      -> Net::YahooMessenger::InvalidLogin.pm
 	  Remove bin/uptime_agent, bin/banner_stat.
 0.12  Wed Jun 19 20:10:22 2002
 	- Refine Compatibility with protocol version 9.
-	  Add YMSG9 Challenge-Response Authentication Mechanism -> Net::YahooMessenger::CRAM.pm
+	  Add YMSG9 Challenge-Response Authentication Mechanism
+	      -> Net::YahooMessenger::CRAM.pm
 	  Modify Login sequence.
 
-	  It fixed so that it could communicate by the Japan-U.S. server.
+	  It fixed so that it could communicate by the Japan and U.S. server.
 	  (Thanks to Rajesh Kannan <rajeshin2000@yahoo.com>
 	   and mayuresh kadu <mayureshk@aftek.com>)
 	- Independent from Crypt::PasswdMD5 module.
 	- Modify sample script.
 	  (Thanks to mayuresh kadu <mayureshk@aftek.com>)
+0.13  Wed Jun 26 19:15:03 JST 2002 
+	- Fix undefined value used warning.
+	  'Argument "" isn\'t numeric in pack'
+	  'Use of uninitialized value in length'
+	  etc...
+	  (Thanks to mayuresh kadu <mayureshk@aftek.com>)
+	- Fix The problem which cannot acquire 'buddy list' is repaired.
+	- Add better test scripts.

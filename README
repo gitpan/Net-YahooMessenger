@@ -16,6 +16,7 @@ Availability
 
 	http://ymca.infoware.ne.jp/dist/
 
+
 INSTALLATION
 
 To install this module type the following:
@@ -25,16 +26,19 @@ To install this module type the following:
    make test
    make install
 
+
 DEPENDENCIES
 
 This module requires these other modules and libraries:
 
   Digest::MD5
 
+
 DEMONSTRATION
 
 A sample Net::YahooMessenger script is included with the distribution,
-under the creative name 'script/ymsg' and 'script/ymsgj'.
+under the creative name 'script/ymsg.pl' or 'script/ymsgj.pl'.
+
 
 COPYRIGHT AND LICENCE
 

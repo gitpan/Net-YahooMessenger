@@ -2,9 +2,11 @@ Changes
 Makefile.PL
 MANIFEST
 README
-test.pl
+t/0.load.t
+t/1.password.t
 script/ymsg.pl
 script/ymsgj.pl
+script/ymsgjdump.pl
 YahooMessenger.pm
 YahooMessenger/Buddy.pm
 YahooMessenger/EventFactory.pm
@@ -13,6 +15,7 @@ YahooMessenger/Login.pm
 YahooMessenger/InvalidLogin.pm
 YahooMessenger/SendMessage.pm
 YahooMessenger/ReceiveMessage.pm
+YahooMessenger/ReceiveBuddyList.pm
 YahooMessenger/GoesOnline.pm
 YahooMessenger/ChangeState.pm
 YahooMessenger/GoesOffline.pm

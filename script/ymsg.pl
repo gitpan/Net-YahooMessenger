@@ -141,7 +141,12 @@ sub GoesOffline
 	my $self = shift;
 	my $event = shift;
 
-	printf "[system] %s goes out.\n", $event->from;
+	if ($event->from) {
+		printf "[system] %s goes out.\n", $event->from;
+	} else {
+		print "[system] You have been logged off as you have logged in on a different machine.\n";
+		exit;
+	}
 }
 
 

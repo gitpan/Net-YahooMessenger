@@ -24,6 +24,7 @@ use constant DATA_TYPE => {
 	ERROR_MESSAGE       => 16,
 	STATUS_MESSAGE      => 19,
 	BUSY_CODE           => 47,
+	BUDDY_LIST          => 87,
 	CHALLENGE_STRING    => 94,
 };
 
@@ -55,10 +56,12 @@ sub _get_by_name
 	my $name = shift;
 	my $raw_event = $self->source;
 
+	return unless exists DATA_TYPE->{$name};
 	my @param = split /\xC0\x80/, $raw_event;
 	my @result;
 	for (my $i=0; $i < scalar @param; $i+=2) {
-		my $value_type   = $param[$i];
+		my $value_type = $param[$i];
+		next unless $value_type =~ /^\d+$/;
 		next if DATA_TYPE->{$name} != $value_type;
 		push @result, $param[$i+1];
 	}
@@ -78,7 +81,10 @@ sub _set_by_name
 		my @raw_data = split /\xC0\x80/, $self->source;	
 		my $new_raw_data;
 		for (my $i=0; $i < scalar @raw_data; $i+=2) {
-			$raw_data[$i+1] = $value if DATA_TYPE->{$name} == $raw_data[$i];
+			next unless $raw_data[$i] =~ /^\d+$/;
+			if (DATA_TYPE->{$name} == $raw_data[$i]) {
+				$raw_data[$i+1] = $value;
+			}
 			$new_raw_data .= $raw_data[$i]. YMSG_SEPARATOR.
 			                  $raw_data[$i+1]. YMSG_SEPARATOR;
 		}
@@ -89,7 +95,6 @@ sub _set_by_name
 			$value. YMSG_SEPARATOR;
 		$self->source($raw_event);
 	}
-#print "raw length: ", length $raw_event, "\n";
 }
 
 
@@ -98,6 +103,7 @@ sub to_raw_string
 	my $self = shift;
 	my $identifier = eval { $self->get_connection->identifier; };
 	my $body = $self->source;
+	$body = '' unless defined $body;
 
 	my $header = pack 'a4Cx3nnNN',
 		YMSG_SIGNATURE,

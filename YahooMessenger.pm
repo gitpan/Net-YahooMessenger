@@ -36,7 +36,7 @@ use constant YMSG_SALT       => '_2S43d5f';
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 =head1 METHODS
 
@@ -132,10 +132,6 @@ sub login
 	$server->send($msg, 0);
 	my $event = $self->recv();
 #	_dump_packet($event->source);
-#	print 'CODE: ', $event->code, "\n";
-#	print 'ID: ', $event->id, "\n";
-#	print 'CHALLENGE: ', $event->body, "\n";
-
 	my $cram = Net::YahooMessenger::CRAM->new;
 	$cram->set_id($self->id);
 	$cram->set_password($self->password);
@@ -151,6 +147,7 @@ sub login
 	);
 	$server->send($auth);
 	my $buddy_list = $self->recv();
+
 	my $login = $self->recv();
 	my $handler = $self->get_event_handler();
 	$handler->accept($login) if $handler;
@@ -460,7 +457,7 @@ sub _create_message
 		length $body,
 		$event_code,
 		$option,
-		$self->identifier || "\x00" x 4;
+		$self->identifier || 0;
 	return $header. $body;
 }
 
@@ -528,21 +525,18 @@ sub _get_list_by_name
 }
 
 
-sub _get_buddy_list_by_array
+sub add_buddy_by_name
 {
 	my $self = shift;
-	my @list = @_;
-
-	my @budy;
-	for (@list) {
-		my ($group, $list) = split /:/;
-		for my $name (split /,/, $list) {
-			my $budy = Net::YahooMessenger::Buddy->new;
-			$budy->name($name);
-			push @budy, $budy;
-		}
+	my $group = shift;
+	my @buddy_name = @_;
+	my @buddy_list = $self->buddy_list();
+	for my $name (@buddy_name) {
+		my $buddy = Net::YahooMessenger::Buddy->new;
+		$buddy->name($name);
+		push @buddy_list, $buddy;
 	}
-	return @budy;
+	$self->buddy_list(@buddy_list);
 }
 
 

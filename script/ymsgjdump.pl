@@ -4,6 +4,7 @@ use Net::YahooMessenger;
 use Jcode;
 use strict;
 
+
 my $yahoo;
 my ($yahoo_id, $password);
 while (1) {
@@ -117,7 +118,30 @@ sub UnImplementEvent
 {
 	my $self = shift;
 	my $event = shift;
+
+	_dump($event);
 }
+
+
+sub _dump
+{
+	my $event = shift;
+
+	printf "Event name: %s\n", (caller(1))[3];
+	printf "Event code: %d\n", $event->code;
+	my $packet = $event->source;
+	while ($packet =~ /(.{1,16})/g) {
+		print join ' ', map {
+			sprintf '%02x', ord $_, (/^[\w\-_\.]$/ ? $_ : '.') 
+		} split //, $1;
+		print ' ' x ((16 - length($1)) * 3 + 8);
+		print join '', map {
+			/^[\w\-_\.]$/ ? $_ : '.';
+		} split //, $1;
+		print "\n";
+	}
+}
+
 
 sub Login
 {
@@ -130,6 +154,8 @@ sub Login
 		$_->to_string
 	} $yahoo->buddy_list;
 	print Jcode->new($baddy_status)->euc, "\n";
+
+	_dump($event);
 }
 
 
@@ -138,7 +164,14 @@ sub GoesOnline
 	my $self = shift;
 	my $event = shift;
 
-	printf "[system] %s goes in.\n", $event->from;
+	if ($event->from) {
+		printf "[system] %s goes in.\n", $event->from;
+		_dump($event);
+	} else {
+		print "[system] You have been logged off as you have logged in on a different machine.\n";
+		_dump($event);
+		exit;
+	}
 }
 
 
@@ -147,12 +180,9 @@ sub GoesOffline
 	my $self = shift;
 	my $event = shift;
 
-	if ($event->from) {
-		printf "[system] %s goes out.\n", $event->from;
-	} else {
-		print "[system] You have been logged off as you have logged in on a different machine.\n";
-		exit;
-	}
+	printf "[system] %s goes out.\n", $event->from;
+
+	_dump($event);
 }
 
 
@@ -176,6 +206,8 @@ sub ChangeState
 			$event->from, $busy_status, STATUS_MESSAGE->[$event->status_code]; 
 	}
 	print Jcode->new($message)->euc;
+
+	_dump($event);
 }
 
 
@@ -189,6 +221,8 @@ sub NewFriendAlert
 	$message .= sprintf "and also sent the following message: %s\n",
 		$event->body; 
 	print Jcode->new($message)->euc;
+
+	_dump($event);
 }
 
 sub ReceiveMessage
@@ -200,6 +234,8 @@ sub ReceiveMessage
 	$body =~ s{</?(?:font|FACE).+?>}{}g;
 	my $message = sprintf "[%s] %s\n", $event->from, $body;
 	print Jcode->new($message)->euc;
+
+	_dump($event);
 }
 
 1;

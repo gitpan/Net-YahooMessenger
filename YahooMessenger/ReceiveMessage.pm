@@ -6,7 +6,8 @@ sub source
 	my $self = shift;
 	if (@_) {
 		$self->{source} = shift;
-		if ($self->_get_by_name('STATUS_CODE') == 99) {
+		my $code = $self->_get_by_name('STATUS_CODE') || 0;
+		if ($code == 99) {
 			require Net::YahooMessenger::NullEvent;
 			bless $self, 'Net::YahooMessenger::NullEvent';
 		}
