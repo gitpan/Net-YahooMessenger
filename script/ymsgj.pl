@@ -13,8 +13,8 @@ while (1) {
 	$yahoo = Net::YahooMessenger->new(
 		id                => $yahoo_id,
 		password          => $password,
+		hostname          => 'cs.yahoo.co.jp',
 		pre_login_url     => 'http://edit.my.yahoo.co.jp/config/',
-		socket_server_url => 'http://update.messenger.yahoo.co.jp/servers.html',
 	);
 	$yahoo->set_event_handler(new CommandLineEventHandler);
 
@@ -117,10 +117,6 @@ sub UnImplementEvent
 {
 	my $self = shift;
 	my $event = shift;
-
-	print "Un Implement event:\n";
-	use Data::Dumper;
-	print Dumper $event;
 }
 
 sub Login

@@ -54,3 +54,14 @@ Revision history for Perl extension Net::YahooMessenger.
 	  Rename Net::YahooMessenger::CannotLogon.pm
 		-> Net::YahooMessenger::InvalidLogin.pm
 	  Remove bin/uptime_agent, bin/banner_stat.
+0.12  Wed Jun 19 20:10:22 2002
+	- Refine Compatibility with protocol version 9.
+	  Add YMSG9 Challenge-Response Authentication Mechanism -> Net::YahooMessenger::CRAM.pm
+	  Modify Login sequence.
+
+	  It fixed so that it could communicate by the Japan-U.S. server.
+	  (Thanks to Rajesh Kannan <rajeshin2000@yahoo.com>
+	   and mayuresh kadu <mayureshk@aftek.com>)
+	- Independent from Crypt::PasswdMD5 module.
+	- Modify sample script.
+	  (Thanks to mayuresh kadu <mayureshk@aftek.com>)

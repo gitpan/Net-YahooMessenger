@@ -21,3 +21,5 @@ YahooMessenger/ServerIsAlive.pm
 YahooMessenger/NullEvent.pm
 YahooMessenger/UnImplementEvent.pm
 YahooMessenger/EventHandler.pm
+YahooMessenger/CRAM.pm
+YahooMessenger/ChallengeStart.pm

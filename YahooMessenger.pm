@@ -8,11 +8,11 @@ Net::YahooMessenger - Interface to the Yahoo!Messenger IM protocol
 
 	use Net::YahooMessenger;
 
-	my $yahoo = Net::YahooMessenger;->new(
+	my $yahoo = Net::YahooMessenger->new(
 		id       => 'your_yahoo_id',
 		password => 'your_password',
 	);
-	$yahoo->login;
+	$yahoo->login or die "Can't login Yahoo!Messenger";
 	$yahoo->send('recipient_yahoo_id', 'Hello World!');
 
 =head1 DESCRIPTION
@@ -27,7 +27,7 @@ use Carp;
 use IO::Socket;
 use IO::Select;
 use Net::YahooMessenger::Buddy;
-
+use Net::YahooMessenger::CRAM;
 
 use constant YMSG_STD_HEADER => 'YMSG';
 use constant YMSG_SEPARATER  => "\xC0\x80";
@@ -36,7 +36,7 @@ use constant YMSG_SALT       => '_2S43d5f';
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.010';
+$VERSION = '0.12';
 
 =head1 METHODS
 
@@ -46,20 +46,20 @@ This section documents method of the Net::YahooMessenger class.
 
 It should be called with following arguments (items with default value are optional):
 
-	id                => yahoo id
-	password          => password
-	pre_login_url     => url which refers to setting information.
-	                     (default http://msg.edit.yahoo.com/config/)
-	socket_server_url => url which refers to the list of SOCKET-SERVER.
-	                     (default http://update.pager.yahoo.com/servers.html)
+	id            => yahoo id
+	password      => password
+	pre_login_url => url which refers to setting information.
+	                 (default http://msg.edit.yahoo.com/config/)
+	hostname      => server hostname
+	                 (default 'cs.yahoo.com)
 
 Returns a blessed instantiation of Net::YahooMessenger.
 
 Note: If you plan to connect with Yahoo!Japan(yahoo.co.jp), it sets up as follows.
 
 	my $yahoo_japan = Net::YahooMessenger->new(
-		pre_login_url     => 'http://edit.my.yahoo.co.jp/config/',
-		socket_server_url => 'http://update.messenger.yahoo.co.jp/servers.html',
+		pre_login_url => 'http://edit.my.yahoo.co.jp/config/',
+		hostname      => 'cs.yahoo.co.jp',
 	);
 
 I<Since it connects with Yahoo!(yahoo.com), this procedure is unnecessary in almost all countries.>
@@ -74,8 +74,8 @@ sub new
 	bless {
 		id       => $args{id},
 		password => $args{password},
+		hostname => $args{hostname} || 'cs.yahoo.com',
 		pre_login_url     => $args{pre_login_url} || 'http://msg.edit.yahoo.com/config/',
-		socket_server_url => $args{socket_server_url} || 'http://update.pager.yahoo.com/servers.html',
 		handle   => undef,
 		_read    => IO::Select->new,
 		_write   => IO::Select->new,
@@ -124,23 +124,55 @@ sub login
 {
 	my $self = shift;
 
-	$self->_get_configuration;
 	my $server = $self->get_connection;
-	my $message = $self->_create_login_command();
-
-	$server->send($message, 0);
+	my $msg = $self->_create_message(
+		87, 0,
+		'1' => $self->id, 
+	);
+	$server->send($msg, 0);
 	my $event = $self->recv();
-	my $handler = $self->get_event_handler;
-	$handler->accept($event) if $handler;
+#	_dump_packet($event->source);
+#	print 'CODE: ', $event->code, "\n";
+#	print 'ID: ', $event->id, "\n";
+#	print 'CHALLENGE: ', $event->body, "\n";
+
+	my $cram = Net::YahooMessenger::CRAM->new;
+	$cram->set_id($self->id);
+	$cram->set_password($self->password);
+	$cram->set_challenge_string($event->body);
+	my ($response_password, $response_crypt) = $cram->get_response_strings();
+	my $auth = $self->_create_message(
+		84, 0, 
+		'0'  => $self->id,
+		'6'  => $response_password,
+		'96' => $response_crypt,
+		'2'  => '1',
+		'1'  => $self->id,
+	);
+	$server->send($auth);
+	my $buddy_list = $self->recv();
+	my $login = $self->recv();
+	my $handler = $self->get_event_handler();
+	$handler->accept($login) if $handler;
 
 	$self->add_event_source($server, sub {
 		my $event = $self->recv;
 		my $handler = $self->get_event_handler;
 		$handler->accept($event);
-	}, 'r');
-	return $event->is_enable;
+	} ,'r');
+
+	return $login->is_enable();
 }
 
+
+sub _dump_packet
+{
+	my $source = shift;
+	print join ' ', map {
+		sprintf '%02x(%s)', ord $_, (/^[\w\-_]$/) ? $_ : '.';
+	} split //, $source;
+	print "\n";	
+}
 
 
 =head2 $yahoo->send($yahoo_id, $message)
@@ -161,7 +193,6 @@ sub send
         $event->to($recipient);
         $event->body($message);
 	$event->option(1515563606);  # in Buddy list then 1515563606 else 1515563605
-
 	$server->send($event->to_raw_string, 0);
 }
 
@@ -278,9 +309,8 @@ sub get_connection
 	my $self = shift;
 	return $self->handle if $self->handle;
 
-	my $hostname = $self->_get_socket_server_name;
 	my $server = IO::Socket::INET->new(
-		PeerAddr => $hostname,
+		PeerAddr => $self->{hostname},
 		PeerPort => $self->get_port,
 		Proto    => 'tcp',
 		Timeout  => 30,
@@ -289,27 +319,6 @@ sub get_connection
 	return 	$self->handle($server);
 }
 
-
-sub _get_socket_server_name
-{
-	my $self = shift;
-	my $agent = $self->_create_http_agent();
-
-	my $request = HTTP::Request->new(GET => $self->{socket_server_url});
-	my $response = $agent->request($request);
-	if ($response->is_error) {
-		print STDERR "Can't connect to $self->{socket_server_url}";
-		return undef;
-	}
-
-	my @list;
-	for my $line (split /\r?\n/, $response->content) {
-		if ($line =~ m/^SocketServers=(.+)$/) {
-			@list = split /;/, $1;
-		}
-	}
-	return $list[0];
-}
 
 
 sub buddy_list
@@ -418,14 +427,6 @@ sub do_one_loop
 }
 
 
-sub get_hostname
-{
-	my $self = shift;
-	return $self->{server} if $self->{server};
-	return 'cs.yahoo.co.jp';
-}
-
-
 sub get_port
 {
 	my $self = shift;
@@ -455,7 +456,7 @@ sub _create_message
 	}
 	my $header = pack "a4Cx3nnNN",
 		YMSG_STD_HEADER,
-		7,
+		9,
 		length $body,
 		$event_code,
 		$option,
@@ -504,45 +505,14 @@ sub identifier
 
 
 #
-sub _get_configuration
-{
-	my $self = shift;
-
-	require HTTP::Request;
-	my $agent = $self->_create_http_agent();
-
-	use constant GET_FRIEND_LIST => '%sncclogin?.src=bl&login=%s&passwd=%s&n=1';
-	my $request = HTTP::Request->new(
-		GET => sprintf GET_FRIEND_LIST,
-			$self->{pre_login_url},
-			$self->id, $self->password
-	);
-	my $response = $agent->request($request);
-	if ($response->is_error) {
-		print STDERR "Can't connect to $self->{pre_login_url}'";
-		return undef;
-	}
-	return undef if $response->content =~ /^ERROR: Invalid NCC Login/;
-
-	my @buddy = $self->_get_buddy_list_by_array(
-		$self->_get_list_by_name('BUDDYLIST', $response->content)
-	);
-	$self->buddy_list(@buddy);
-}
 
 
-sub _create_http_agent
-{
-	my $self = shift;
+#	my @buddy = $self->_get_buddy_list_by_array(
+#		$self->_get_list_by_name('BUDDYLIST', $response->content)
+#	);
+#	$self->buddy_list(@buddy);
 
-	require LWP::UserAgent;
-	my $agent = LWP::UserAgent->new(
-		agent      => "Net-YahooMessenger/$VERSION",
-		parse_head => 0,
-		timeout    => 30,
-	);
-	return $agent;
-}
+
 
 
 sub _get_list_by_name
@@ -590,7 +560,7 @@ __END__
 	my $yahoo = Net::YahooMessenger->new;
 	$yahoo->id('yahoo_id');
 	$yahoo->password('password');
-	$yahoo->login;
+	$yahoo->login or die "Can't login Yahoo!Messenger";
 	
 	$yahoo->send('recipient_yahoo_id', 'Hello World!');
 	__END__
@@ -606,7 +576,7 @@ __END__
 		id       => 'yahoo_id',
 		password => 'password',
 	);
-	$yahoo->login;
+	$yahoo->login or die "Can't login Yahoo!Messenger";;
 	
 	$yahoo->change_state(IN_BUSY, q{I'm very busy now!});
 	sleep 5;
@@ -623,7 +593,7 @@ __END__
 		password => 'password',
 	);
 	$yahoo->set_event_handler(new ToStdoutEventHandler);
-	$yahoo->login;
+	$yahoo->login or die "Can't login Yahoo!Messenger";
 	$yahoo->start;
 	
 	
@@ -652,11 +622,12 @@ __END__
 	use strict;
 	
 	my $yahoo = Net::YahooMessenger->new(
-		pre_login_url     => 'http://edit.my.yahoo.co.jp/config/',
-		socket_server_url => 'http://update.messenger.yahoo.co.jp/servers.html',
+		pre_login_url => 'http://edit.my.yahoo.co.jp/config/',
+		hostname      => 'cs.yahoo.co.jp',
+	);
 	$yahoo->id('yahoo_id');
 	$yahoo->password('password');
-	$yahoo->login;
+	$yahoo->login or die "Can't login Yahoo!Messenger";
 	
 	$yahoo->send('recipient_yahoo_id', 'Konnitiwa Sekai!');
 	__END__

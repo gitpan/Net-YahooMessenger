@@ -24,6 +24,7 @@ use constant DATA_TYPE => {
 	ERROR_MESSAGE       => 16,
 	STATUS_MESSAGE      => 19,
 	BUSY_CODE           => 47,
+	CHALLENGE_STRING    => 94,
 };
 
 
@@ -100,7 +101,7 @@ sub to_raw_string
 
 	my $header = pack 'a4Cx3nnNN',
 		YMSG_SIGNATURE,
-		7,
+		9,
 		length $body,
 		$self->code,
 		$self->option,

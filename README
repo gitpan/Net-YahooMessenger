@@ -29,8 +29,7 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-  Crypt::PasswdMD5
-  LWP::UserAgent
+  Digest::MD5
 
 DEMONSTRATION
 

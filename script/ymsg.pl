@@ -110,10 +110,6 @@ sub UnImplementEvent
 {
 	my $self = shift;
 	my $event = shift;
-
-	print "Un Implement event:\n";
-	use Data::Dumper;
-	print Dumper $event;
 }
 
 sub Login

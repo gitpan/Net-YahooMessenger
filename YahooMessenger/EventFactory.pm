@@ -10,6 +10,9 @@ use constant YMSG_CHANGE_AVAILABLE => 4;
 use constant YMSG_MESSAGE          => 6;
 use constant YMSG_NEW_FRIEND_ALERT => 15;
 use constant YMSG_SERVER_IS_ALIVE  => 76;
+use constant YMSG_AUTH             => 84;
+use constant YMSG_BUDDY_LIST       => 85;
+use constant YMSG_BEGIN_AUTH       => 87;
 
 use constant ID                       => '1';
 use constant BADDY_NAME               => '7';
@@ -29,6 +32,8 @@ use constant EVENT_CLASS => {
 	6  => 'Net::YahooMessenger::ReceiveMessage',
 	15 => 'Net::YahooMessenger::NewFriendAlert',
 	76 => 'Net::YahooMessenger::ServerIsAlive',
+	85 => 'Net::YahooMessenger::LoginSuccessful',
+	87 => 'Net::YahooMessenger::ChallengeStart',
 };
 
 
@@ -92,7 +97,7 @@ sub create_by_raw_data
 		my $class = EVENT_CLASS->{$event_code};
 		eval "require $class";
 		if ($@) {
-			print STDERR $@;
+		#	print STDERR $@;
 			require Net::YahooMessenger::UnImplementEvent;
 			my $event = Net::YahooMessenger::UnImplementEvent->new($connection);
 			$event->code($event_code);
