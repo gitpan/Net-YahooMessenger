@@ -1,5 +1,9 @@
 Revision history for Perl extension Net::YahooMessenger.
 
+0.16  Sat Nov 13 23:29:29 JST 2004
+	- fixed bug of "Can't call method "status" on an undefined value"
+	  (Thanks to Hiroyuki Oyama)
+
 0.15  Wed Jan 14 02:58:27 JST 2004
 	- Maintainers are now wanted.
 

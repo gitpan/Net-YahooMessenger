@@ -75,19 +75,19 @@ sub create_by_raw_data
 				$buddy = $connection->get_buddy_by_name($baddy[$i+1]);
 			}
 			elsif ($baddy[$i] eq STATE) {
-				$buddy->status($baddy[$i+1]);
+				$buddy->status($baddy[$i+1]) if $buddy;
 			}
 			elsif ($baddy[$i] eq STATE_OF_USER_DEFINITION) {
-				$buddy->custom_status($baddy[$i+1]);
+				$buddy->custom_status($baddy[$i+1]) if $buddy;
 			}
 			elsif ($baddy[$i] eq BUSYNESS) {
-				$buddy->busy($baddy[$i+1]);
+				$buddy->busy($baddy[$i+1]) if $buddy;
 			}
 			elsif ($baddy[$i] eq SESSION_ID) {
-				$buddy->session_id($baddy[$i+1]);
+				$buddy->session_id($baddy[$i+1]) if $buddy;
 			}
 			elsif ($baddy[$i] eq ONLINE_OR_OFFLINE) {
-				$buddy->online($baddy[$i+1]);
+				$buddy->online($baddy[$i+1]) if $buddy;
 			}
 			else {}
 		}
