@@ -15,6 +15,12 @@ Net::YahooMessenger - Interface to the Yahoo!Messenger IM protocol
 	$yahoo->login or die "Can't login Yahoo!Messenger";
 	$yahoo->send('recipient_yahoo_id', 'Hello World!');
 
+=head1 CAVEATS
+
+B<MAINTAINERS WANTED>
+
+This module is not in active maintenance now. Thus it doesn't play well with recent Yahoo! protocol updates. If you are interested in taking over this module on CPAN, please let me know your CPAN author ID to me at miyagawa[at]cpan.org.
+
 =head1 DESCRIPTION
 
 Net::YahooMessenger is a client class for connecting with the Yahoo!Messenger server, and transmitting and receiving a message.
@@ -36,7 +42,7 @@ use constant YMSG_SALT       => '_2S43d5f';
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.14';
+$VERSION = '0.15';
 
 =head1 METHODS
 

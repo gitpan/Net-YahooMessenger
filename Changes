@@ -1,5 +1,8 @@
 Revision history for Perl extension Net::YahooMessenger.
 
+0.15  Wed Jan 14 02:58:27 JST 2004
+	- Maintainers are now wanted.
+
 0.14  Tue Oct 21 06:14:33 JST 2003
 	- Tatsuhiko Miyagawa now takes over the module from Hiroyuki Oyama.
 
