@@ -18,11 +18,11 @@ sub source
 sub from
 {
 	my $self = shift;
-	$self->_set_by_name('FROM', shift) if @_;
+	$self->_set_by_name('RECV_FROM', shift) if @_;
 	if ($self->_get_by_name('ERROR_MESSAGE')) {
 		return 'system';
 	}
-	$self->_get_by_name('FROM');
+	$self->_get_by_name('RECV_FROM');
 }
 
 

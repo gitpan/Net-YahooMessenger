@@ -11,7 +11,7 @@ use constant YMSG_MESSAGE          => 6;
 use constant YMSG_NEW_FRIEND_ALERT => 15;
 use constant YMSG_SERVER_IS_ALIVE  => 76;
 use constant YMSG_AUTH             => 84;
-use constant YMSG_BUDDY_LIST       => 85;
+use constant YMSG_BUDDY_LIST       => 241;
 use constant YMSG_BEGIN_AUTH       => 87;
 
 use constant ID                       => '1';
@@ -32,8 +32,9 @@ use constant EVENT_CLASS => {
 	6  => 'Net::YahooMessenger::ReceiveMessage',
 	15 => 'Net::YahooMessenger::NewFriendAlert',
 	76 => 'Net::YahooMessenger::ServerIsAlive',
-	85 => 'Net::YahooMessenger::ReceiveBuddyList',
+    85 => 'Net::YahooMessenger::UserInfo',
 	87 => 'Net::YahooMessenger::ChallengeStart',
+	241=> 'Net::YahooMessenger::ReceiveBuddyList',
 };
 
 
@@ -117,6 +118,7 @@ sub create_by_name
 	my $class = 'Net::YahooMessenger::'. shift;
 	eval "require $class";
 	if ($@) {
+        warn "No event matched require failed : $@";
 		require Net::YahooMessenger::NullEvent;
 		return Net::YahooMessenger::NullEvent->new;
 	}

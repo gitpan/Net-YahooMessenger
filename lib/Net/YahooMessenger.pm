@@ -17,9 +17,7 @@ Net::YahooMessenger - Interface to the Yahoo!Messenger IM protocol
 
 =head1 CAVEATS
 
-B<MAINTAINERS WANTED>
-
-This module is not in active maintenance now. Thus it doesn't play well with recent Yahoo! protocol updates. If you are interested in taking over this module on CPAN, please let me know your CPAN author ID to me at miyagawa[at]cpan.org.
+Module was changed to work with the latest version(16) of the Yahoo protocol. However, this might not work very well, your opinions and suggestions will be helpfull.
 
 =head1 DESCRIPTION
 
@@ -34,15 +32,17 @@ use IO::Socket;
 use IO::Select;
 use Net::YahooMessenger::Buddy;
 use Net::YahooMessenger::CRAM;
+use Net::YahooMessenger::HTTPS;
 
-use constant YMSG_STD_HEADER => 'YMSG';
-use constant YMSG_SEPARATER  => "\xC0\x80";
-use constant YMSG_SALT       => '_2S43d5f';
+use constant YMSG_STD_HEADER             => 'YMSG';
+use constant YMSG_SEPARATER              => "\xC0\x80";
+use constant YMSG_SALT                   => '_2S43d5f';
+use constant YMSG_PROTOCOL_VERSION       => '16';
 
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.16';
+$VERSION = '0.17';
 
 =head1 METHODS
 
@@ -54,8 +54,6 @@ It should be called with following arguments (items with default value are optio
 
 	id            => yahoo id
 	password      => password
-	pre_login_url => url which refers to setting information.
-	                 (default http://msg.edit.yahoo.com/config/)
 	hostname      => server hostname
 	                 (default 'cs.yahoo.com)
 
@@ -64,7 +62,6 @@ Returns a blessed instantiation of Net::YahooMessenger.
 Note: If you plan to connect with Yahoo!Japan(yahoo.co.jp), it sets up as follows.
 
 	my $yahoo_japan = Net::YahooMessenger->new(
-		pre_login_url => 'http://edit.my.yahoo.co.jp/config/',
 		hostname      => 'cs.yahoo.co.jp',
 	);
 
@@ -80,7 +77,8 @@ sub new
 	bless {
 		id       => $args{id},
 		password => $args{password},
-		hostname => $args{hostname} || 'cs.yahoo.com',
+		hostname => $args{hostname} || 'scsa.msg.yahoo.com',
+        #this is probably not needed for the version 16 YM protocol
 		pre_login_url     => $args{pre_login_url} || 'http://msg.edit.yahoo.com/config/',
 		handle   => undef,
 		_read    => IO::Select->new,
@@ -131,27 +129,28 @@ sub login
 	my $self = shift;
 
 	my $server = $self->get_connection;
+
 	my $msg = $self->_create_message(
 		87, 0,
 		'1' => $self->id, 
 	);
 	$server->send($msg, 0);
 	my $event = $self->recv();
-#	_dump_packet($event->source);
-	my $cram = Net::YahooMessenger::CRAM->new;
-	$cram->set_id($self->id);
-	$cram->set_password($self->password);
-	$cram->set_challenge_string($event->body);
-	my ($response_password, $response_crypt) = $cram->get_response_strings();
+    my $https = Net::YahooMessenger::HTTPS->new($self->id,$self->password,$event->body);
 	my $auth = $self->_create_message(
 		84, 0, 
-		'0'  => $self->id,
-		'6'  => $response_password,
-		'96' => $response_crypt,
-		'2'  => '1',
-		'1'  => $self->id,
+        '1'   => $self->id, 
+		'0'   => $self->id,
+        '277' => $https->y_string, 
+        '278' => $https->t_string, 
+        '307' => $https->md5_string,
+        '244' => '4194239',
+        '2'   => $self->id,
+        '2'   => $self->id,
+        '135' => '9.0.0.2152',
 	);
 	$server->send($auth);
+    my $user_info = $self->recv();
 	my $buddy_list = $self->recv();
 
 	my $login = $self->recv();
@@ -443,23 +442,18 @@ sub _create_message
 	my $self = shift;
 	my $event_code = shift;
 	my $option = shift;
-	my %param = @_;
+	my @param = @_;
+    my $body = '';
 
-	my $body = join '', map {
-		$_. YMSG_SEPARATER. $param{$_}. YMSG_SEPARATER
-	} keys %param;
+    while ( @param ) {
+        my $key = shift @param ;
+        my $value = shift @param;
+	    $body .= $key. YMSG_SEPARATER. $value. YMSG_SEPARATER;
+    }
 
-	if ($event_code == 6) {
-		my $buddy = $self->get_buddy_by_name($param{5});
-		if ($buddy) {
-			$option = 1515563606;
-		} else {
-			$option = 1515563605;
-		}
-	}
-	my $header = pack "a4Cx3nnNN",
+	my $header = pack "a4xCx2nnNN",
 		YMSG_STD_HEADER,
-		9,
+		YMSG_PROTOCOL_VERSION,
 		length $body,
 		$event_code,
 		$option,
@@ -638,6 +632,8 @@ Hiroyuki OYAMA <oyama@cpan.org> http://ymca.infoware.ne.jp/
 
 From October 2003, this module is taken over and maintained by
 Tatsuhiko Miyagawa L<lt>miyagawa@bulknews.netL<gt>
+
+From September 2009, Emil Dragu <emil.dragu@webwave.ro> is comaintainer.
 
 =head1 SEE ALSO
 

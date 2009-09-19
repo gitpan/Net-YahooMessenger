@@ -7,11 +7,13 @@ use constant YMSG_SALT      => '_2S43d5f';
 use constant DEFAULT_OPTION => 1515563605;
 use constant HIDE_LOGIN     => 12;
 
+use constant YMSG_PROTOCOL_VERSION       => '16';
+
 use constant DATA_TYPE => {
 	ID                  => 0,
-	NICKNAME            => 1,
 	PROPOSERS_ID        => 3,
-	FROM                => 4,
+	FROM                => 1,
+    RECV_FROM           => 4,
 	TO                  => 5,
 	CRYPTED_PASSWORD    => 6,
 	BUDDY_ID            => 7,
@@ -55,7 +57,6 @@ sub _get_by_name
 	my $self = shift;
 	my $name = shift;
 	my $raw_event = $self->source;
-
 	return unless exists DATA_TYPE->{$name};
 	my @param = split /\xC0\x80/, $raw_event;
 	my @result;
@@ -75,7 +76,6 @@ sub _set_by_name
 	my $self = shift;
 	my $name = shift;
 	my $value = shift;
-
 	my ($current_value) = $self->_get_by_name($name);
 	if (defined $current_value) {
 		my @raw_data = split /\xC0\x80/, $self->source;	
@@ -105,9 +105,9 @@ sub to_raw_string
 	my $body = $self->source;
 	$body = '' unless defined $body;
 
-	my $header = pack 'a4Cx3nnNN',
+	my $header = pack 'a4xCx2nnNN',
 		YMSG_SIGNATURE,
-		9,
+		YMSG_PROTOCOL_VERSION,
 		length $body,
 		$self->code,
 		$self->option,
