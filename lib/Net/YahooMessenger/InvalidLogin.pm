@@ -4,10 +4,9 @@ use strict;
 
 sub is_enable { undef }
 
-sub to_string
-{
-	my $self = shift;
-	"Invalid Login\n";
+sub to_string {
+    my $self = shift;
+    "Invalid Login\n";
 }
 
 1;

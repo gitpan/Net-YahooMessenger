@@ -34,10 +34,10 @@ use Net::YahooMessenger::Buddy;
 use Net::YahooMessenger::CRAM;
 use Net::YahooMessenger::HTTPS;
 
-use constant YMSG_STD_HEADER             => 'YMSG';
-use constant YMSG_SEPARATER              => "\xC0\x80";
-use constant YMSG_SALT                   => '_2S43d5f';
-use constant YMSG_PROTOCOL_VERSION       => '16';
+use constant YMSG_STD_HEADER       => 'YMSG';
+use constant YMSG_SEPARATER        => "\xC0\x80";
+use constant YMSG_SALT             => '_2S43d5f';
+use constant YMSG_PROTOCOL_VERSION => '16';
 
 use strict;
 
@@ -69,26 +69,26 @@ I<Since it connects with Yahoo!(yahoo.com), this procedure is unnecessary in alm
 
 =cut
 
-sub new
-{
-	my $class = shift;
-	my %args = @_;
+sub new {
+    my $class = shift;
+    my %args  = @_;
 
-	bless {
-		id       => $args{id},
-		password => $args{password},
-		hostname => $args{hostname} || 'scsa.msg.yahoo.com',
+    bless {
+        id       => $args{id},
+        password => $args{password},
+        hostname => $args{hostname} || 'scsa.msg.yahoo.com',
+
         #this is probably not needed for the version 16 YM protocol
-		pre_login_url     => $args{pre_login_url} || 'http://msg.edit.yahoo.com/config/',
-		handle   => undef,
-		_read    => IO::Select->new,
-		_write   => IO::Select->new,
-		_error   => IO::Select->new,
-		event_handler => undef,
-		buddy_list => [],
-	}, $class;
+        pre_login_url => $args{pre_login_url}
+          || 'http://msg.edit.yahoo.com/config/',
+        handle        => undef,
+        _read         => IO::Select->new,
+        _write        => IO::Select->new,
+        _error        => IO::Select->new,
+        event_handler => undef,
+        buddy_list    => [],
+    }, $class;
 }
-
 
 =head2 $yahoo->id([$yahoo_id])
 
@@ -96,13 +96,11 @@ This method gets or sets the present B<Yahoo Id>.
 
 =cut
 
-sub id
-{
-	my $self = shift;
-	$self->{id} = shift if @_;
-	$self->{id};
+sub id {
+    my $self = shift;
+    $self->{id} = shift if @_;
+    $self->{id};
 }
-
 
 =head2 $yahoo->password([$password])
 
@@ -110,13 +108,11 @@ This method gets or sets the present B<password>.
 
 =cut
 
-sub password
-{
-	my $self = shift;
-	$self->{password} = shift if @_;
-	$self->{password};
+sub password {
+    my $self = shift;
+    $self->{password} = shift if @_;
+    $self->{password};
 }
-
 
 =head2 $yahoo->login()
 
@@ -124,58 +120,56 @@ Call this after C<new()> to logon the Yahoo!Messenger service.
 
 =cut
 
-sub login
-{
-	my $self = shift;
+sub login {
+    my $self = shift;
 
-	my $server = $self->get_connection;
+    my $server = $self->get_connection;
 
-	my $msg = $self->_create_message(
-		87, 0,
-		'1' => $self->id, 
-	);
-	$server->send($msg, 0);
-	my $event = $self->recv();
-    my $https = Net::YahooMessenger::HTTPS->new($self->id,$self->password,$event->body);
-	my $auth = $self->_create_message(
-		84, 0, 
-        '1'   => $self->id, 
-		'0'   => $self->id,
-        '277' => $https->y_string, 
-        '278' => $https->t_string, 
+    my $msg = $self->_create_message( 87, 0, '1' => $self->id, );
+    $server->send( $msg, 0 );
+    my $event = $self->recv();
+    my $https = Net::YahooMessenger::HTTPS->new( $self->id, $self->password,
+        $event->body );
+    my $auth = $self->_create_message(
+        84, 0,
+        '1'   => $self->id,
+        '0'   => $self->id,
+        '277' => $https->y_string,
+        '278' => $https->t_string,
         '307' => $https->md5_string,
         '244' => '4194239',
         '2'   => $self->id,
         '2'   => $self->id,
         '135' => '9.0.0.2152',
-	);
-	$server->send($auth);
-    my $user_info = $self->recv();
-	my $buddy_list = $self->recv();
+    );
+    $server->send($auth);
+    my $user_info  = $self->recv();
+    my $buddy_list = $self->recv();
 
-	my $login = $self->recv();
-	my $handler = $self->get_event_handler();
-	$handler->accept($login) if $handler;
+    my $login   = $self->recv();
+    my $handler = $self->get_event_handler();
+    $handler->accept($login) if $handler;
 
-	$self->add_event_source($server, sub {
-		my $event = $self->recv;
-		my $handler = $self->get_event_handler;
-		$handler->accept($event);
-	} ,'r');
+    $self->add_event_source(
+        $server,
+        sub {
+            my $event   = $self->recv;
+            my $handler = $self->get_event_handler;
+            $handler->accept($event);
+        },
+        'r'
+    );
 
-	return $login->is_enable();
+    return $login->is_enable();
 }
 
-
-sub _dump_packet
-{
-	my $source = shift;
-	print join ' ', map {
-		sprintf '%02x(%s)', ord $_, (/^[\w\-_]$/) ? $_ : '.';
-	} split //, $source;
-	print "\n";	
+sub _dump_packet {
+    my $source = shift;
+    print join ' ',
+      map { sprintf '%02x(%s)', ord $_, (/^[\w\-_]$/) ? $_ : '.'; } split //,
+      $source;
+    print "\n";
 }
-
 
 =head2 $yahoo->send($yahoo_id, $message)
 
@@ -183,21 +177,19 @@ This method send an Instant-Message C<$message> to the user specified by C<$yaho
 
 =cut
 
-sub send
-{
-	my $self = shift;
-	my $recipient = shift;
-	my $message = join '', @_;
-	my $server = $self->handle;
+sub send {
+    my $self      = shift;
+    my $recipient = shift;
+    my $message   = join '', @_;
+    my $server    = $self->handle;
 
-        my $event = $self->create('SendMessage');
-        $event->from($self->id);
-        $event->to($recipient);
-        $event->body($message);
-	$event->option(1515563606);  # in Buddy list then 1515563606 else 1515563605
-	$server->send($event->to_raw_string, 0);
+    my $event = $self->create('SendMessage');
+    $event->from( $self->id );
+    $event->to($recipient);
+    $event->body($message);
+    $event->option(1515563606);  # in Buddy list then 1515563606 else 1515563605
+    $server->send( $event->to_raw_string, 0 );
 }
-
 
 =head2 $yahoo->change_state($busy, $status_message)
 
@@ -211,46 +203,39 @@ The C<$busy> should be called with following arguments:
 
 =cut
 
-sub change_state
-{
-	my $self = shift;
-	my $busy = shift;
-	my $message = join '', @_;
-	my $server = $self->handle;
+sub change_state {
+    my $self    = shift;
+    my $busy    = shift;
+    my $message = join '', @_;
+    my $server  = $self->handle;
 
-	my $event = $self->create('ChangeState');
-	$event->status_code(99);    # 99 : Custom status
-	$event->busy($busy);
-	$event->body($message);
+    my $event = $self->create('ChangeState');
+    $event->status_code(99);    # 99 : Custom status
+    $event->busy($busy);
+    $event->body($message);
 
-	$server->send($event->to_raw_string, 0);
+    $server->send( $event->to_raw_string, 0 );
 }
 
+sub change_status_by_code {
+    my $self        = shift;
+    my $status_code = shift || 0;
+    my $server      = $self->handle;
 
-sub change_status_by_code
-{
-	my $self = shift;
-	my $status_code = shift || 0;
-	my $server = $self->handle;
+    my $event = $self->create('ChangeState');
+    $event->status_code($status_code);
+    $event->busy(1);
 
-	my $event = $self->create('ChangeState');
-	$event->status_code($status_code);
-	$event->busy(1);
-
-	$server->send($event->to_raw_string, 0);	
+    $server->send( $event->to_raw_string, 0 );
 }
 
-
-sub ping
-{
-	my $self = shift;
-	my $server = $self->get_connection;
-	my $command = $self->_create_message(
-		76, 0, 0, ''
-	);
-	$server->send($command, 0);
-	my $pong = $self->recv();
-	return $pong->is_enable;
+sub ping {
+    my $self    = shift;
+    my $server  = $self->get_connection;
+    my $command = $self->_create_message( 76, 0, 0, '' );
+    $server->send( $command, 0 );
+    my $pong = $self->recv();
+    return $pong->is_enable;
 }
 
 =head2 $yahoo->recv()
@@ -291,14 +276,12 @@ The event number on Yahoo Messenger Protocol.
 
 =cut
 
-sub recv
-{
-	my $self = shift;
-	require Net::YahooMessenger::EventFactory;
-	my $event_factory = Net::YahooMessenger::EventFactory->new($self);
-	return $event_factory->create_by_raw_data();
+sub recv {
+    my $self = shift;
+    require Net::YahooMessenger::EventFactory;
+    my $event_factory = Net::YahooMessenger::EventFactory->new($self);
+    return $event_factory->create_by_raw_data();
 }
-
 
 =head2 $yahoo->get_connection()
 
@@ -306,39 +289,32 @@ This method returns a raw server socket. When connection has already ended, the 
 
 =cut
 
-sub get_connection
-{
-	my $self = shift;
-	return $self->handle if $self->handle;
+sub get_connection {
+    my $self = shift;
+    return $self->handle if $self->handle;
 
-	my $server = IO::Socket::INET->new(
-		PeerAddr => $self->{hostname},
-		PeerPort => $self->get_port,
-		Proto    => 'tcp',
-		Timeout  => 30,
-	) or die $!;
-	$server->autoflush(1);
-	return 	$self->handle($server);
+    my $server = IO::Socket::INET->new(
+        PeerAddr => $self->{hostname},
+        PeerPort => $self->get_port,
+        Proto    => 'tcp',
+        Timeout  => 30,
+    ) or die $!;
+    $server->autoflush(1);
+    return $self->handle($server);
 }
 
-
-
-sub buddy_list
-{
-	my $self = shift;
-	@{$self->{buddy_list}} = @_ if @_;
-	return @{$self->{buddy_list}};
+sub buddy_list {
+    my $self = shift;
+    @{ $self->{buddy_list} } = @_ if @_;
+    return @{ $self->{buddy_list} };
 }
 
-
-sub get_buddy_by_name
-{
-	my $self = shift;
-	my $name = shift;
-	my ($buddy) = grep { lc $_->name eq lc $name } $self->buddy_list;
-	return $buddy;
+sub get_buddy_by_name {
+    my $self = shift;
+    my $name = shift;
+    my ($buddy) = grep { lc $_->name eq lc $name } $self->buddy_list;
+    return $buddy;
 }
-
 
 =head2 $yahoo->set_event_hander($event_handler)
 
@@ -348,19 +324,15 @@ Note: The event which can be overwritten should look at the method signature of 
 
 =cut
 
-sub set_event_handler
-{
-	my $self = shift;
-	$self->{event_handler} = shift;
+sub set_event_handler {
+    my $self = shift;
+    $self->{event_handler} = shift;
 }
 
-
-sub get_event_handler
-{
-	my $self = shift;
-	return $self->{event_handler};
+sub get_event_handler {
+    my $self = shift;
+    return $self->{event_handler};
 }
-
 
 =head2 $yahoo->add_event_source($file_handle, $code_ref, $flag)
 
@@ -381,22 +353,20 @@ By adding another handle (for example, STDIN), processing can be performed based
 
 =cut
 
-sub add_event_source
-{
-	my $self = shift;
-	my ($handle, $code, $flag, $obj) = @_;
+sub add_event_source {
+    my $self = shift;
+    my ( $handle, $code, $flag, $obj ) = @_;
 
-	foreach my $mode (split //, lc $flag) {
-		if ($mode eq 'r') {
-			$self->{_read}->add($handle);
-		}
-		elsif ($mode eq 'w') {
-			$self->{_write}->add($handle);
-		}
-	}
-	$self->{_connhash}->{$handle} = [ $code, $obj ];
+    foreach my $mode ( split //, lc $flag ) {
+        if ( $mode eq 'r' ) {
+            $self->{_read}->add($handle);
+        }
+        elsif ( $mode eq 'w' ) {
+            $self->{_write}->add($handle);
+        }
+    }
+    $self->{_connhash}->{$handle} = [ $code, $obj ];
 }
-
 
 =head2 $yahoo->start()
 
@@ -404,141 +374,119 @@ If you're writing a fairly simple application that doesn't need to interface wit
 
 =cut
 
-sub start
-{
-	my $self = shift;
-	while (1) {
-		$self->do_one_loop;
-	}
+sub start {
+    my $self = shift;
+    while (1) {
+        $self->do_one_loop;
+    }
 }
 
+sub do_one_loop {
+    my $self = shift;
 
-sub do_one_loop
-{
-	my $self = shift;
-
-	for my $ready (IO::Select->select(
-		$self->{_read}, $self->{_write}, $self->{_error}, 10
-		))
-	{
-		for my $handle (@$ready) {
-			my $event = $self->{_connhash}->{$handle};
-			$event->[0]->($event->[1] ? ($event->[1], $handle) : $handle);
-		}
-	}
+    for my $ready (
+        IO::Select->select(
+            $self->{_read}, $self->{_write}, $self->{_error}, 10
+        )
+      )
+    {
+        for my $handle (@$ready) {
+            my $event = $self->{_connhash}->{$handle};
+            $event->[0]->( $event->[1] ? ( $event->[1], $handle ) : $handle );
+        }
+    }
 }
 
-
-sub get_port
-{
-	my $self = shift;
-	return $self->{port} if $self->{port};
-	return 5050;
+sub get_port {
+    my $self = shift;
+    return $self->{port} if $self->{port};
+    return 5050;
 }
 
+sub _create_message {
+    my $self       = shift;
+    my $event_code = shift;
+    my $option     = shift;
+    my @param      = @_;
+    my $body       = '';
 
-sub _create_message
-{
-	my $self = shift;
-	my $event_code = shift;
-	my $option = shift;
-	my @param = @_;
-    my $body = '';
-
-    while ( @param ) {
-        my $key = shift @param ;
+    while (@param) {
+        my $key   = shift @param;
         my $value = shift @param;
-	    $body .= $key. YMSG_SEPARATER. $value. YMSG_SEPARATER;
+        $body .= $key . YMSG_SEPARATER . $value . YMSG_SEPARATER;
     }
 
-	my $header = pack "a4xCx2nnNN",
-		YMSG_STD_HEADER,
-		YMSG_PROTOCOL_VERSION,
-		length $body,
-		$event_code,
-		$option,
-		$self->identifier || 0;
-	return $header. $body;
+    my $header = pack "a4xCx2nnNN",
+      YMSG_STD_HEADER,
+      YMSG_PROTOCOL_VERSION,
+      length $body,
+      $event_code,
+      $option,
+      $self->identifier || 0;
+    return $header . $body;
 }
 
+sub create {
+    my $self       = shift;
+    my $event_name = shift;
 
-sub create
-{
-	my $self = shift;
-	my $event_name = shift;
-
-	require Net::YahooMessenger::EventFactory;
-	my $event_factory = Net::YahooMessenger::EventFactory->new($self);
-	return $event_factory->create_by_name($event_name);
+    require Net::YahooMessenger::EventFactory;
+    my $event_factory = Net::YahooMessenger::EventFactory->new($self);
+    return $event_factory->create_by_name($event_name);
 }
 
-
-sub _create_login_command
-{
-	my $self = shift;
-	my $event = $self->create('Login');
-	$event->id($self->id);
-	$event->password($self->password);
-	$event->from($self->id);
-	$event->hide(0);
-	return $event->to_raw_string;
+sub _create_login_command {
+    my $self  = shift;
+    my $event = $self->create('Login');
+    $event->id( $self->id );
+    $event->password( $self->password );
+    $event->from( $self->id );
+    $event->hide(0);
+    return $event->to_raw_string;
 }
 
-
-sub handle
-{
-	my $self = shift;
-	$self->{handle} = shift if @_;
-	$self->{handle};
+sub handle {
+    my $self = shift;
+    $self->{handle} = shift if @_;
+    $self->{handle};
 }
 
-
-sub identifier
-{
-	my $self = shift;
-	$self->{identifier} = shift if @_;
-	$self->{identifier};
+sub identifier {
+    my $self = shift;
+    $self->{identifier} = shift if @_;
+    $self->{identifier};
 }
-
 
 #
-
 
 #	my @buddy = $self->_get_buddy_list_by_array(
 #		$self->_get_list_by_name('BUDDYLIST', $response->content)
 #	);
 #	$self->buddy_list(@buddy);
 
+sub _get_list_by_name {
+    my $self   = shift;
+    my $name   = shift;
+    my $string = shift;
 
-
-
-sub _get_list_by_name
-{
-	my $self = shift;
-	my $name = shift;
-	my $string = shift;
-
-	if ($string =~ /BEGIN $name\r?\n(.*)\r?\nEND $name/s) {
-		my @list = split /\r?\n/, $1;
-		return @list;
-	}
+    if ( $string =~ /BEGIN $name\r?\n(.*)\r?\nEND $name/s ) {
+        my @list = split /\r?\n/, $1;
+        return @list;
+    }
 }
 
-
-sub add_buddy_by_name
-{
-	my $self = shift;
-	my $group = shift;
-	my @buddy_name = @_;
-	my @buddy_list = $self->buddy_list();
-	for my $name (@buddy_name) {
-		my $buddy = Net::YahooMessenger::Buddy->new;
-		$buddy->name($name);
-		push @buddy_list, $buddy;
-	}
-	$self->buddy_list(@buddy_list);
+sub add_buddy_by_name {
+    my $self       = shift;
+    my $group      = shift;
+    my @buddy_name = @_;
+    my @buddy_list = $self->buddy_list();
+    for my $name (@buddy_name) {
+        my $buddy = Net::YahooMessenger::Buddy->new;
+        $buddy->name($name);
+        push @buddy_list, $buddy;
+    }
+    $self->buddy_list(@buddy_list);
 }
-
 
 1;
 __END__
