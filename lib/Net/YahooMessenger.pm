@@ -42,7 +42,7 @@ use constant YMSG_PROTOCOL_VERSION => '16';
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.17';
+$VERSION = '0.19';
 
 =head1 METHODS
 

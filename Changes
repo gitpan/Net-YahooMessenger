@@ -1,5 +1,5 @@
 Revision history for Perl extension Net::YahooMessenger.
-0.18  Sun Jun 27 11:20:45 EEST 2010
+0.19  Sun Jun 27 11:20:45 EEST 2010
     - added patch for proxy awareness, "Bug #51628 for Net-YahooMessenger: HTTPS proxy awareness"
       (provided by alexw)
     - added patch for uri_escape $seed, "Bug #57615 for Net-YahooMessenger: _https_login needs to uri_escape the seed when"
